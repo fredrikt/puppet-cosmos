@@ -1,7 +1,7 @@
 
 # inspired by http://blogs.thehumanjourney.net/oaubuntu/entry/kvm_vmbuilder_puppet_really_automated
 
-define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0', $memory='512', $rootsize='20G', $cpus = '1', $iptables_input = 'INPUT', $iptables_output = 'OUTPUT', $iptables_forard = 'FORWARD', $extras = '') {
+define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0', $memory='512', $rootsize='20G', $cpus = '1', $iptables_input = 'INPUT', $iptables_output = 'OUTPUT', $iptables_forward = 'FORWARD', $extras = '') {
 
   #
   # Create
