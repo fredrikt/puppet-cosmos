@@ -1,7 +1,7 @@
 
 # inspired by http://blogs.thehumanjourney.net/oaubuntu/entry/kvm_vmbuilder_puppet_really_automated
 
-define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0', $memory='512', $rootsize='20G', $cpus = '1', $iptables_input = 'INPUT', $iptables_output = 'OUTPUT', $iptables_forard = 'FORWARD' ) {
+define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0', $memory='512', $rootsize='20G', $cpus = '1', $iptables_input = 'INPUT', $iptables_output = 'OUTPUT', $iptables_forard = 'FORWARD', $extras = '') {
 
   #
   # Create
@@ -29,12 +29,12 @@ define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0
     kvm ubuntu -d /var/lib/libvirt/images/$name -m $memory --cpus $cpus --rootsize $rootsize --bridge $bridge \
     --hostname $name --ssh-key /root/.ssh/authorized_keys --suite $suite --flavour virtual --libvirt qemu:///system \
     --verbose --firstboot /var/tmp/firstboot_${name} --copy /var/tmp/files_${name} \
-    --addpkg unattended-upgrades > /var/tmp/vm-$name-install.log 2>&1" ,
-    unless        => "/usr/bin/test -d /var/lib/libvirt/images/${name}",
-    before        => File["${name}.xml"],
-    require       => [Package['python-vm-builder'],
-                      Exec["check_kvm_enabled_${name}"],
-                      ],
+    --addpkg unattended-upgrades $extras > /var/tmp/vm-$name-install.log 2>&1" ,
+    unless => "/usr/bin/test -d /var/lib/libvirt/images/${name}",
+    before => File["${name}.xml"],
+    require => [Package['python-vm-builder'],
+                Exec["check_kvm_enabled_${name}"],
+                ],
   }
 
   #
