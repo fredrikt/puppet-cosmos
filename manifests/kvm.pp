@@ -1,7 +1,20 @@
 
 # inspired by http://blogs.thehumanjourney.net/oaubuntu/entry/kvm_vmbuilder_puppet_really_automated
 
-define cosmos::kvm($domain, $ip, $netmask, $resolver, $gateway, $repo, $tagpattern, $suite='precise', $bridge='br0', $memory='512', $rootsize='20G', $cpus = '1' ) {
+define cosmos::kvm(
+  $domain,
+  $ip,
+  $netmask,
+  $resolver,
+  $gateway,
+  $repo,
+  $tagpattern,
+  $suite='precise',
+  $bridge='br0',
+  $memory='512',
+  $rootsize='20G',
+  $cpus = '1',
+  ) {
 
   file { "/var/tmp/firstboot_${name}":
      ensure => file,
