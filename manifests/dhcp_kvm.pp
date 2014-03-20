@@ -14,17 +14,21 @@ define cosmos::dhcp_kvm(
   $iptables_output = 'OUTPUT',
   $iptables_forward = 'FORWARD',
   $extras = '',
+  $tmpdir = '/var/tmp',
+  $logdir = '/var/log',
+  $cosmos_repo_dir = '/var/cache/cosmos/repo/',
+  $images_dir = '/var/lib/libvirt/images'
   ) {
 
   #
   # Create
   #
-  file { "/var/tmp/firstboot_${name}":
+  file { "${tmpdir}/firstboot_${name}":
     ensure => file,
     content => "#!/bin/sh\nuserdel -r ubuntu; cd /root && sed -i \"s/${name}.${domain}//g\" /etc/hosts && /root/bootstrap-cosmos.sh ${name} ${repo} ${tagpattern} && cosmos update && cosmos apply\n",
   } ->
 
-  file { "/var/tmp/files_${name}":
+  file { "${tmpdir}/files_${name}":
     ensure => file,
     content => "/root/cosmos_1.2-2_all.deb /root\n/root/bootstrap-cosmos.sh /root\n",
   } ->
@@ -33,17 +37,22 @@ define cosmos::dhcp_kvm(
     command => "/usr/sbin/kvm-ok",
   } ->
 
+  # Make sure the host is defined in cosmos as bootstrapping will fail otherwise
+  file { "${cosmos_repo_dir}/${name}":
+    ensure => 'directory',
+  } ->
+
   exec { "create_cosmos_vm_${name}":
     path          => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
     timeout       => '3600',
-    environment   => ["TMPDIR=/var/tmp",
+    environment   => ["TMPDIR=${tmpdir}",
                       ],
-    command       => "virsh destroy $name || true ; virsh undefine $name || true ; /usr/bin/vmbuilder \
-    kvm ubuntu -d /var/lib/libvirt/images/$name -m $memory --cpus $cpus --rootsize $rootsize --bridge $bridge \
-    --hostname $name --ssh-key /root/.ssh/authorized_keys --suite $suite --flavour virtual --libvirt qemu:///system \
-    --verbose --firstboot /var/tmp/firstboot_${name} --copy /var/tmp/files_${name} \
-    --addpkg unattended-upgrades $extras > /var/tmp/vm-$name-install.log 2>&1" ,
-    unless => "/usr/bin/test -d /var/lib/libvirt/images/${name}",
+    command       => "virsh destroy ${name} || true ; virsh undefine ${name} || true ; /usr/bin/vmbuilder \
+    kvm ubuntu -d ${images_dir}/${name} -m ${memory} --cpus ${cpus} --rootsize ${rootsize} --bridge ${bridge} \
+    --hostname ${name} --ssh-key /root/.ssh/authorized_keys --suite ${suite} --flavour virtual --libvirt qemu:///system \
+    --verbose --firstboot ${tmpdir}/firstboot_${name} --copy ${tmpdir}/files_${name} \
+    --addpkg unattended-upgrades $extras > ${logdir}/vm-${name}-install.log 2>&1" ,
+    unless => "/usr/bin/test -d ${images_dir}/${name}",
     before => File["${name}.xml"],
     require => [Package['python-vm-builder'],
                 Exec["check_kvm_enabled_${name}"],
@@ -74,7 +83,7 @@ define cosmos::dhcp_kvm(
   exec { "start_cosmos_vm_${name}":
     path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
     timeout => '60',
-    command => "virsh start $name",
+    command => "virsh start ${name}",
     onlyif  => "grep -q \"<mac address='${mac}'/>\" /etc/libvirt/qemu/${name}.xml",
     unless  => "virsh list | egrep -q \\ ${name}\\ +running",
     require => [Exec["check_kvm_enabled_${name}"],
