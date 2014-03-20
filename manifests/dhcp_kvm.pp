@@ -6,12 +6,12 @@ define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0
   #
   # Create
   #
-  file { "/tmp/firstboot_${name}":
+  file { "/var/tmp/firstboot_${name}":
     ensure => file,
     content => "#!/bin/sh\nuserdel -r ubuntu; cd /root && sed -i \"s/${name}.${domain}//g\" /etc/hosts && /root/bootstrap-cosmos.sh ${name} ${repo} ${tagpattern} && cosmos update && cosmos apply\n",
   } ->
 
-  file { "/tmp/files_${name}":
+  file { "/var/tmp/files_${name}":
     ensure => file,
     content => "/root/cosmos_1.2-2_all.deb /root\n/root/bootstrap-cosmos.sh /root\n",
   } ->
@@ -21,18 +21,20 @@ define cosmos::dhcp_kvm($mac, $repo, $tagpattern, $suite='precise', $bridge='br0
   } ->
 
   exec { "create_cosmos_vm_${name}":
-    path    => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
-    timeout => '3600',
-    command => "virsh destroy $name || true ; virsh undefine $name || true ; /usr/bin/vmbuilder \
+    path          => '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+    timeout       => '3600',
+    environment   => ["TMPDIR=/var/tmp",
+                      ],
+    command       => "virsh destroy $name || true ; virsh undefine $name || true ; /usr/bin/vmbuilder \
     kvm ubuntu -d /var/lib/libvirt/images/$name -m $memory --cpus $cpus --rootsize $rootsize --bridge $bridge \
     --hostname $name --ssh-key /root/.ssh/authorized_keys --suite $suite --flavour virtual --libvirt qemu:///system \
-    --verbose --firstboot /tmp/firstboot_${name} --copy /tmp/files_${name} \
-    --addpkg unattended-upgrades > /tmp/vm-$name-install.log 2>&1" ,
-    unless => "/usr/bin/test -d /var/lib/libvirt/images/${name}",
-    before => File["${name}.xml"],
-    require => [Package['python-vm-builder'],
-                Exec["check_kvm_enabled_${name}"],
-                ],
+    --verbose --firstboot /var/tmp/firstboot_${name} --copy /var/tmp/files_${name} \
+    --addpkg unattended-upgrades > /var/tmp/vm-$name-install.log 2>&1" ,
+    unless        => "/usr/bin/test -d /var/lib/libvirt/images/${name}",
+    before        => File["${name}.xml"],
+    require       => [Package['python-vm-builder'],
+                      Exec["check_kvm_enabled_${name}"],
+                      ],
   }
 
   #
