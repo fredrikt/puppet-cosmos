@@ -111,28 +111,61 @@ define cosmos_kvm_replace($file, $pattern_no_slashes, $replacement_no_slashes) {
   }
 }
 
-define cosmos_kvm_iptables($bridge = 'br0', $iptables_input = 'INPUT', $iptables_output = 'OUTPUT', $iptables_forward = 'FORWARD') {
+define cosmos_kvm_iptables(
+  $bridge           = 'br0',
+  $iptables_input   = 'INPUT',
+  $iptables_output  = 'OUTPUT',
+  $iptables_forward = 'FORWARD',
+  $ipv6             = true,
+  ) {
+
+  cosmos_kvm_iptables2 { "${name}_v4":
+    cmd              => 'iptables',
+    bridge           => $bridge,
+    iptables_input   => $iptables_input,
+    iptables_output  => $iptables_output,
+    iptables_forward => $iptables_forward,
+  }
+
+  if $ipv6 == true {
+    cosmos_kvm_iptables2 { "${name}_v6":
+      cmd              => 'ip6tables',
+      bridge           => $bridge,
+      iptables_input   => $iptables_input,
+      iptables_output  => $iptables_output,
+      iptables_forward => $iptables_forward,
+    }
+  }
+}
+
+define cosmos_kvm_iptables2(
+  $cmd,
+  $bridge,
+  $iptables_input,
+  $iptables_output,
+  $iptables_forward,
+  ) {
   exec {"${name}_cmd":
-    command => "iptables --new-chain cosmos-kvm-traffic &&
+    command => "${cmd} --new-chain cosmos-kvm-traffic &&
 
     # if LOCAL, don't filter here
-    iptables -A cosmos-kvm-traffic -m addrtype --dst-type LOCAL -j RETURN &&
+    ${cmd} -A cosmos-kvm-traffic -m addrtype --dst-type LOCAL -j RETURN &&
 
     # Allow bridge interface traffic that was not LOCAL
-    iptables -A cosmos-kvm-traffic -i $bridge -j ACCEPT &&
+    ${cmd} -A cosmos-kvm-traffic -i $bridge -j ACCEPT &&
 
     # Allow bridge interface traffic that was not LOCAL
-    iptables -A cosmos-kvm-traffic -o $bridge -j ACCEPT &&
+    ${cmd} -A cosmos-kvm-traffic -o $bridge -j ACCEPT &&
 
     # Anything else, don't filter here
-    iptables -A cosmos-kvm-traffic -j RETURN &&
+    ${cmd} -A cosmos-kvm-traffic -j RETURN &&
 
     # Jump to this chain from input/output chains specified
-    iptables -I $iptables_input -j cosmos-kvm-traffic &&
-    iptables -I $iptables_output -j cosmos-kvm-traffic &&
-    iptables -I $iptables_forward -j cosmos-kvm-traffic &&
+    ${cmd} -I $iptables_input -j cosmos-kvm-traffic &&
+    ${cmd} -I $iptables_output -j cosmos-kvm-traffic &&
+    ${cmd} -I $iptables_forward -j cosmos-kvm-traffic &&
     true",
-    unless => "iptables -L cosmos-kvm-traffic",
+    unless => "${cmd} -L cosmos-kvm-traffic",
   }
 
 }
