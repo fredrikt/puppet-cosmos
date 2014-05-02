@@ -163,7 +163,6 @@ define cosmos_kvm_iptables2(
     # Jump to this chain from input/output chains specified
     ${cmd} -I $iptables_input -j cosmos-kvm-traffic &&
     ${cmd} -I $iptables_output -j cosmos-kvm-traffic &&
-    ${cmd} -I $iptables_forward -j cosmos-kvm-traffic &&
     true",
     unless => "${cmd} -L cosmos-kvm-traffic",
   }
@@ -183,7 +182,7 @@ define cosmos_kvm_iptables2(
     ${cmd} -A cosmos-kvm-traffic -j RETURN &&
 
     # Jump to this chain from forward chain specified
-    ${cmd} -I $iptables_forward -j cosmos-kvm-traffic &&
+    ${cmd} -I $iptables_forward -j cosmos-kvm-traffic-forward &&
     true",
     unless => "${cmd} -L cosmos-kvm-traffic-forward",
   }
