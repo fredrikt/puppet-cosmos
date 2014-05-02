@@ -145,46 +145,48 @@ define cosmos_kvm_iptables2(
   $iptables_output,
   $iptables_forward,
   ) {
+  $chain = "cosmos-kvm-traffic"
   exec {"${name}_cmd":
-    command => "${cmd} --new-chain cosmos-kvm-traffic &&
+    command => "${cmd} --new-chain ${chain} &&
 
     # if LOCAL, don't filter here
-    ${cmd} -A cosmos-kvm-traffic -m addrtype --dst-type LOCAL -j RETURN &&
+    ${cmd} -A ${chain} -m addrtype --dst-type LOCAL -j RETURN &&
 
     # Allow bridge interface traffic that was not LOCAL
-    ${cmd} -A cosmos-kvm-traffic -i $bridge -j ACCEPT &&
+    ${cmd} -A ${chain} -i $bridge -j ACCEPT &&
 
     # Allow bridge interface traffic that was not LOCAL
-    ${cmd} -A cosmos-kvm-traffic -o $bridge -j ACCEPT &&
+    ${cmd} -A ${chain} -o $bridge -j ACCEPT &&
 
     # Anything else, don't filter here
-    ${cmd} -A cosmos-kvm-traffic -j RETURN &&
+    ${cmd} -A ${chain} -j RETURN &&
 
     # Jump to this chain from input/output chains specified
-    ${cmd} -I $iptables_input -j cosmos-kvm-traffic &&
-    ${cmd} -I $iptables_output -j cosmos-kvm-traffic &&
+    ${cmd} -I $iptables_input -j ${chain} &&
+    ${cmd} -I $iptables_output -j ${chain} &&
     true",
-    unless => "${cmd} -L cosmos-kvm-traffic",
+    unless => "${cmd} -L ${chain}",
   }
 
   # The FORWARD chain can't deny LOCAL traffic, lest the VMs won't
   # be able to communicate with the host.
+  $fwd_chain = "cosmos-kvm-traffic-forward"
   exec {"${name}_forward_cmd":
-    command => "${cmd} --new-chain cosmos-kvm-traffic-forward &&
+    command => "${cmd} --new-chain ${fwd_chain} &&
 
     # Allow bridge interface traffic
-    ${cmd} -A cosmos-kvm-traffic -i $bridge -j ACCEPT &&
+    ${cmd} -A ${fwd_chain} -i $bridge -j ACCEPT &&
 
     # Allow bridge interface traffic
-    ${cmd} -A cosmos-kvm-traffic -o $bridge -j ACCEPT &&
+    ${cmd} -A ${fwd_chain} -o $bridge -j ACCEPT &&
 
     # Anything else, don't filter here
-    ${cmd} -A cosmos-kvm-traffic -j RETURN &&
+    ${cmd} -A ${fwd_chain} -j RETURN &&
 
     # Jump to this chain from forward chain specified
-    ${cmd} -I $iptables_forward -j cosmos-kvm-traffic-forward &&
+    ${cmd} -I $iptables_forward -j ${fwd_chain} &&
     true",
-    unless => "${cmd} -L cosmos-kvm-traffic-forward",
+    unless => "${cmd} -L ${fwd_chain}",
   }
 
 }
