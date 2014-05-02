@@ -168,4 +168,24 @@ define cosmos_kvm_iptables2(
     unless => "${cmd} -L cosmos-kvm-traffic",
   }
 
+  # The FORWARD chain can't deny LOCAL traffic, lest the VMs won't
+  # be able to communicate with the host.
+  exec {"${name}_forward_cmd":
+    command => "${cmd} --new-chain cosmos-kvm-traffic-forward &&
+
+    # Allow bridge interface traffic
+    ${cmd} -A cosmos-kvm-traffic -i $bridge -j ACCEPT &&
+
+    # Allow bridge interface traffic
+    ${cmd} -A cosmos-kvm-traffic -o $bridge -j ACCEPT &&
+
+    # Anything else, don't filter here
+    ${cmd} -A cosmos-kvm-traffic -j RETURN &&
+
+    # Jump to this chain from forward chain specified
+    ${cmd} -I $iptables_forward -j cosmos-kvm-traffic &&
+    true",
+    unless => "${cmd} -L cosmos-kvm-traffic-forward",
+  }
+
 }
