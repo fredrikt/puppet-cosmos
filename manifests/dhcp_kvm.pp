@@ -127,7 +127,7 @@ define cosmos_kvm_iptables(
     iptables_forward => $iptables_forward,
   }
 
-  if $ipv6 == true {
+  if $ipv6 == true and $::operatingsystemrelease >= '13.10' {
     cosmos_kvm_iptables2 { "${name}_v6":
       cmd              => 'ip6tables',
       bridge           => $bridge,
