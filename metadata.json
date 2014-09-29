@@ -1,0 +1,14 @@
+{
+  "name": "puppet-cosmos",
+  "version": "1.0.0",
+  "author": "Leif Joahansson",
+  "summary": "A puppet module for vmbuilder",
+  "license": "BSD",
+  "source": "git://github.com/samlbits/puppet-vmbuilder",
+  "project_page": "https://github.com/leifj/puppet-vmbuilder",
+  "issues_url": "https://github.com/samlbits/puppet-vmbuilder/issues",
+  "description": "Installs and manages libvirt mashines using vmbuilder on ubuntu",
+  "dependencies": [
+  
+  ]
+}
