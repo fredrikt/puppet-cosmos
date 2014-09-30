@@ -21,7 +21,7 @@ class cosmos::httpsproxy ($certs = ['/etc/ssl/private/server.pem']) {
       head_require => 'Host:.*',
       backend_ip => '127.0.0.1',
       backend_port => '80',
-      certs => $certs
+      server_cert => $certs
    }
    ufw::allow { "allow-pound-https":
       ip   => 'any',
