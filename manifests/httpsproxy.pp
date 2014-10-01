@@ -23,6 +23,12 @@ class cosmos::httpsproxy ($certs = ['/etc/ssl/private/server.pem']) {
       backend_port => '80',
       server_cert => $certs
    }
+   include augeas
+   augeas { "etc_default_pound":
+      changes => [
+         "set /files/etc/default/pound/startup 1",
+      ],
+   }
    ufw::allow { "allow-pound-https":
       ip   => 'any',
       port => 443
