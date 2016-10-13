@@ -35,6 +35,6 @@ class cosmos::httpsproxy ($certs = ['/etc/ssl/private/server.pem']) {
    }
    ufw::allow { "allow-pound-https":
       ip   => 'any',
-      port => 443
+      port => '443'
    }
 }
