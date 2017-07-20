@@ -10,7 +10,7 @@ class cosmos::access ($keys) {
    include ufw
    ufw::allow { "allow-ssh-from-all":
       ip => any,
-      port => 22
+      port => '22'
    }
 
    package {'openssh-server':
